@@ -1,0 +1,31 @@
+name: Sync Upstream
+
+on:
+  schedule:
+    # 每 6 小时执行一次，避开整点
+    - cron: "17 */6 * * *"
+  workflow_dispatch: # 支持手动运行
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 同步上游仓库
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${GITHUB_REPOSITORY}/merge-upstream" \
+            -f branch="$TARGET_BRANCH"
